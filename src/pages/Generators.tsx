@@ -231,8 +231,11 @@ const Generators = () => {
               </div>
             </div>
 
+            {/* Usage Meter */}
+            <UsageMeter used={used} limit={limit} percentage={percentage} plan={plan} />
+
             {/* Inputs */}
-            <div className="glass-card p-6 rounded-xl mb-6">
+            <div className="glass-card p-6 rounded-xl mb-6 mt-6">
               <div className="grid sm:grid-cols-2 gap-4">
                 {fields.map((field) => (
                   <div key={field.key} className={field.type === "text" && active === "character" ? "sm:col-span-2" : ""}>
