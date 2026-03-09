@@ -20,6 +20,7 @@ export type Database = {
           generator_type: string
           id: string
           inputs: Json | null
+          is_favorite: boolean
           result: Json
           user_id: string
         }
@@ -28,6 +29,7 @@ export type Database = {
           generator_type: string
           id?: string
           inputs?: Json | null
+          is_favorite?: boolean
           result: Json
           user_id: string
         }
@@ -36,6 +38,7 @@ export type Database = {
           generator_type?: string
           id?: string
           inputs?: Json | null
+          is_favorite?: boolean
           result?: Json
           user_id?: string
         }
