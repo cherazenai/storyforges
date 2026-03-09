@@ -17,6 +17,7 @@ interface Generation {
 
 const Dashboard = () => {
   const { user, loading: authLoading, displayName } = useAuth();
+  const { plan } = useUsage();
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "favorites">("all");
