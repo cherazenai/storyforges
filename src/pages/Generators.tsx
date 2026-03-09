@@ -285,9 +285,7 @@ const Generators = () => {
         </button>
 
         {/* Sidebar */}
-        <aside className="fixed lg:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 border-r border-border/50 p-5 z-30 transition-transform lg:translate-x-0 bg-background lg:bg-transparent"
-          style={{ transform: sidebarOpen ? "translateX(0)" : undefined, ...(sidebarOpen ? {} : { transform: undefined }) }}
-          className={`fixed lg:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 border-r border-border/50 p-5 z-30 transition-transform duration-300 lg:translate-x-0 bg-background ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        <aside className={`fixed lg:sticky top-16 left-0 h-[calc(100vh-4rem)] w-64 border-r border-border/50 p-5 z-30 transition-transform duration-300 lg:translate-x-0 bg-background ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         >
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5 px-3">Generators</h2>
           <nav className="space-y-1.5">
