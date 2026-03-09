@@ -4,6 +4,9 @@ import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Sta
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
+import UsageMeter from "@/components/UsageMeter";
+import LimitReachedModal from "@/components/LimitReachedModal";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
