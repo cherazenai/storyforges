@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wand2, Clock, Star, Copy, Trash2, Download, LogIn } from "lucide-react";
+import { Wand2, Clock, Star, Copy, Trash2, Download, LogIn, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
 import { Link } from "react-router-dom";
 
 interface Generation {
@@ -16,6 +17,7 @@ interface Generation {
 
 const Dashboard = () => {
   const { user, loading: authLoading, displayName } = useAuth();
+  const { plan } = useUsage();
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "favorites">("all");
@@ -140,7 +142,43 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {/* Tabs */}
+          {/* Upgrade Banner for Free Users */}
+          {plan === "free" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mb-10 relative overflow-hidden rounded-xl border border-primary/30"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--void)), hsl(var(--primary) / 0.08))",
+              }}
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--frost)/0.12),transparent_60%)]" />
+              <div className="relative p-6 flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-6 h-6 text-frost" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground mb-1">
+                      Unlock unlimited creativity
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      You're on the <span className="text-frost font-medium">Free plan</span> with 10 generations/day.
+                      Upgrade to get up to 5,000/month + premium generators.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/pricing"
+                  className="btn-primary-gradient px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center gap-2 flex-shrink-0 hover:scale-105 transition-transform"
+                >
+                  View Plans <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </motion.div>
+          )}
+
           <div className="flex gap-1 mb-4 border-b border-border">
             {[
               { key: "all", label: `All (${totalGenerations})` },
