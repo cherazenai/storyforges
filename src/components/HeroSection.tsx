@@ -1,46 +1,108 @@
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { Sparkles, Wand2, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { Wand2, BookOpen, Search } from "lucide-react";
+
+const searchItems = [
+  { label: "Character Generator", path: "/generators", type: "generator" },
+  { label: "Villain Generator", path: "/generators", type: "generator" },
+  { label: "World Generator", path: "/generators", type: "generator" },
+  { label: "Plot Twist Generator", path: "/generators", type: "generator" },
+  { label: "Cultivation Generator", path: "/generators", type: "generator" },
+  { label: "Name Generator", path: "/generators", type: "generator" },
+  { label: "Dark Elf Assassin Character", path: "/generators", type: "character" },
+  { label: "Dragon Knight Character", path: "/generators", type: "character" },
+  { label: "Character Sheet Designer", path: "/generators", type: "tool" },
+  { label: "Export PDF", path: "/generators", type: "tool" },
+];
 
 const HeroSection = () => {
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const navigate = useNavigate();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = query.trim()
+    ? searchItems.filter((s) => s.label.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setFocused(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
       {/* Glow aura */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-20"
-        style={{ background: "radial-gradient(circle, hsl(196 51% 33% / 0.4), transparent 70%)" }}
-      />
-      <div className="absolute top-1/4 right-1/4 w-[300px] h-[300px] rounded-full opacity-10"
-        style={{ background: "radial-gradient(circle, hsl(208 30% 74% / 0.3), transparent 70%)" }}
+      <div
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-15"
+        style={{ background: "radial-gradient(circle, hsl(196 51% 33% / 0.5), transparent 70%)" }}
       />
 
-      <div className="container max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
-        {/* Left content */}
+      <div className="container max-w-3xl mx-auto text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center lg:text-left"
+          transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-frost/20 bg-frost/5 text-frost text-sm mb-6"
-          >
-            <Sparkles className="w-4 h-4" />
-            AI-Powered Writing Toolkit
-          </motion.div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
-            Build Better Stories with{" "}
-            <span className="gradient-text">AI-Powered Writing Tools</span>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5 tracking-tight">
+            Forge unforgettable characters and worlds with{" "}
+            <span className="gradient-text">AI</span>.
           </h1>
 
-          <p className="text-lg text-silver/70 max-w-xl mb-8 leading-relaxed mx-auto lg:mx-0">
-            Generate characters, fantasy worlds, plots, cultivation systems, and story ideas in seconds.
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
+            StoryForge helps fantasy writers create characters, magic systems, worlds, and story arcs instantly.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+          {/* Search */}
+          <div ref={ref} className="relative max-w-lg mx-auto mb-8">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                placeholder="Search characters, generators, or story ideas..."
+                className="input-glass w-full pl-12 pr-4 py-3.5 rounded-xl text-base"
+                style={{ boxShadow: "0 0 20px hsl(196 51% 33% / 0.08)" }}
+              />
+            </div>
+
+            <AnimatePresence>
+              {focused && filtered.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  className="absolute top-full mt-2 left-0 right-0 glass-card-static rounded-xl overflow-hidden z-20 border border-border"
+                >
+                  {filtered.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => {
+                        navigate(item.path);
+                        setQuery("");
+                        setFocused(false);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors flex items-center justify-between"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-muted/50">
+                        {item.type}
+                      </span>
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/generators"
               className="btn-primary-gradient px-8 py-3.5 rounded-lg text-center font-semibold inline-flex items-center justify-center gap-2"
@@ -55,52 +117,6 @@ const HeroSection = () => {
               <BookOpen className="w-4 h-4" />
               Explore Generators
             </Link>
-          </div>
-        </motion.div>
-
-        {/* Right mockup */}
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="hidden lg:block"
-        >
-          <div className="glass-card p-6 rounded-xl relative">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-3 h-3 rounded-full bg-destructive/60" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-              <div className="w-3 h-3 rounded-full bg-green-500/60" />
-              <span className="text-xs text-muted-foreground ml-2">Character Generator</span>
-            </div>
-
-            <div className="space-y-3 mb-4">
-              <div className="flex gap-2">
-                <span className="text-xs text-muted-foreground w-20">Role</span>
-                <div className="flex-1 h-8 bg-muted/50 rounded-md flex items-center px-3 text-sm text-frost">Fallen Prince</div>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-xs text-muted-foreground w-20">Setting</span>
-                <div className="flex-1 h-8 bg-muted/50 rounded-md flex items-center px-3 text-sm text-frost">Dark Fantasy</div>
-              </div>
-            </div>
-
-            <div className="bg-muted/30 rounded-lg p-4 border border-frost/5">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1, duration: 1 }}
-              >
-                <p className="text-sm font-semibold text-frost mb-2">⚔️ Kael Draven</p>
-                <p className="text-xs text-silver/60 leading-relaxed">
-                  A ruthless yet secretly honorable fallen prince, haunted by guilt and driven to reclaim his destroyed kingdom. He carries forbidden blood magic...
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Floating glow */}
-            <div className="absolute -bottom-4 -right-4 w-32 h-32 rounded-full opacity-20 blur-2xl"
-              style={{ background: "hsl(196 51% 33%)" }}
-            />
           </div>
         </motion.div>
       </div>
