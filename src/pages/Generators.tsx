@@ -4,6 +4,9 @@ import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Sta
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
+import UsageMeter from "@/components/UsageMeter";
+import LimitReachedModal from "@/components/LimitReachedModal";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
@@ -73,6 +76,7 @@ const characterResultOrder = [
 
 const Generators = () => {
   const { user } = useAuth();
+  const { plan, used, limit, percentage, isAtLimit, refresh: refreshUsage } = useUsage();
   const [active, setActive] = useState("character");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<Record<string, string> | null>(null);
@@ -80,8 +84,13 @@ const Generators = () => {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const handleGenerate = async () => {
+    if (isAtLimit) {
+      setShowLimitModal(true);
+      return;
+    }
     setLoading(true);
     setResult(null);
     setResultId(null);
@@ -112,6 +121,7 @@ const Generators = () => {
           result: generatedResult,
         }).select("id").single();
         if (insertedData) setResultId(insertedData.id);
+        refreshUsage();
       }
     } catch (err) {
       console.error("Generation error:", err);
@@ -221,8 +231,11 @@ const Generators = () => {
               </div>
             </div>
 
+            {/* Usage Meter */}
+            <UsageMeter used={used} limit={limit} percentage={percentage} plan={plan} />
+
             {/* Inputs */}
-            <div className="glass-card p-6 rounded-xl mb-6">
+            <div className="glass-card p-6 rounded-xl mb-6 mt-6">
               <div className="grid sm:grid-cols-2 gap-4">
                 {fields.map((field) => (
                   <div key={field.key} className={field.type === "text" && active === "character" ? "sm:col-span-2" : ""}>
@@ -326,6 +339,7 @@ const Generators = () => {
           </motion.div>
         </main>
       </div>
+      <LimitReachedModal open={showLimitModal} onClose={() => setShowLimitModal(false)} />
     </div>
   );
 };
