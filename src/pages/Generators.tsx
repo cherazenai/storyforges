@@ -339,6 +339,7 @@ const Generators = () => {
           </motion.div>
         </main>
       </div>
+      <LimitReachedModal open={showLimitModal} onClose={() => setShowLimitModal(false)} />
     </div>
   );
 };
