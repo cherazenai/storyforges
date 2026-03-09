@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
@@ -42,6 +43,7 @@ const inputFields: GeneratorInputs = {
 };
 
 const Generators = () => {
+  const { user } = useAuth();
   const [active, setActive] = useState("character");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<Record<string, string> | null>(null);
@@ -70,14 +72,15 @@ const Generators = () => {
       const generatedResult = data.result as Record<string, string>;
       setResult(generatedResult);
 
-      // Save to history
-      const history = JSON.parse(localStorage.getItem("sf_history") || "[]");
-      history.unshift({
-        generator: active,
-        date: new Date().toISOString(),
-        result: generatedResult,
-      });
-      localStorage.setItem("sf_history", JSON.stringify(history.slice(0, 50)));
+      // Save to database if logged in
+      if (user) {
+        await supabase.from("generations").insert({
+          user_id: user.id,
+          generator_type: active,
+          inputs,
+          result: generatedResult,
+        });
+      }
     } catch (err) {
       console.error("Generation error:", err);
       toast.error("Failed to generate. Please try again.");
