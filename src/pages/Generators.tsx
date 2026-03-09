@@ -428,6 +428,22 @@ const Generators = () => {
                       Export Word
                     </button>
                   </motion.div>
+
+                  {/* Character Sheet Button */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="mt-3"
+                  >
+                    <button
+                      onClick={() => setShowCharSheet(true)}
+                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold btn-primary-gradient hover:shadow-[0_0_24px_hsl(var(--frost)/0.2)] transition-all duration-200"
+                    >
+                      <LayoutTemplate className="w-4 h-4" />
+                      Create Character Sheet
+                    </button>
+                  </motion.div>
                 )}
               </>
             )}
@@ -436,6 +452,14 @@ const Generators = () => {
       </div>
 
       <LimitReachedModal open={showLimitModal} onClose={() => setShowLimitModal(false)} />
+      {result && active === "character" && (
+        <CharacterSheetModal
+          open={showCharSheet}
+          onClose={() => setShowCharSheet(false)}
+          data={result}
+          plan={plan}
+        />
+      )}
 
       {/* No Character Generated Modal */}
       <AnimatePresence>
