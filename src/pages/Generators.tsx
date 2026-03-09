@@ -87,6 +87,7 @@ const Generators = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [showNoCharModal, setShowNoCharModal] = useState(false);
 
   const handleGenerate = async () => {
     if (isAtLimit) {
