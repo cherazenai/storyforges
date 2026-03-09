@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, Sparkles, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const links = [
   { label: "Home", path: "/" },
@@ -13,6 +15,14 @@ const links = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, displayName, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-navbar">
@@ -40,12 +50,29 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Login
-          </Link>
-          <Link to="/signup" className="btn-primary-gradient px-5 py-2 rounded-lg text-sm">
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {displayName || user.email?.split("@")[0]}
+              </span>
+              <button
+                onClick={handleSignOut}
+                className="btn-ghost-frost px-4 py-2 rounded-lg text-sm flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Login
+              </Link>
+              <Link to="/signup" className="btn-primary-gradient px-5 py-2 rounded-lg text-sm">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -77,8 +104,16 @@ const Navbar = () => {
                 </Link>
               ))}
               <div className="flex gap-3 pt-2 border-t border-border">
-                <Link to="/login" onClick={() => setOpen(false)} className="text-sm text-muted-foreground">Login</Link>
-                <Link to="/signup" onClick={() => setOpen(false)} className="btn-primary-gradient px-4 py-2 rounded-lg text-sm">Sign Up</Link>
+                {user ? (
+                  <button onClick={() => { handleSignOut(); setOpen(false); }} className="text-sm text-muted-foreground">
+                    Sign Out
+                  </button>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setOpen(false)} className="text-sm text-muted-foreground">Login</Link>
+                    <Link to="/signup" onClick={() => setOpen(false)} className="btn-primary-gradient px-4 py-2 rounded-lg text-sm">Sign Up</Link>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

@@ -1,56 +1,95 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wand2, Clock, Star, Copy, Trash2, Download } from "lucide-react";
+import { Wand2, Clock, Star, Copy, Trash2, Download, LogIn } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
-interface HistoryItem {
-  generator: string;
-  date: string;
+interface Generation {
+  id: string;
+  generator_type: string;
   result: Record<string, string>;
+  created_at: string;
 }
 
 const Dashboard = () => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const { user, loading: authLoading, displayName } = useAuth();
+  const [generations, setGenerations] = useState<Generation[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("sf_history") || "[]");
-    setHistory(saved);
-  }, []);
+    if (!user) return;
+    const fetchGenerations = async () => {
+      const { data, error } = await supabase
+        .from("generations")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (!error && data) setGenerations(data as Generation[]);
+      setLoading(false);
+    };
+    fetchGenerations();
+  }, [user]);
 
-  const totalGenerations = history.length;
-  const todayCount = history.filter(
-    (h) => new Date(h.date).toDateString() === new Date().toDateString()
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-frost/20 border-t-frost rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="glass-card p-8 rounded-xl text-center max-w-md">
+          <LogIn className="w-10 h-10 text-frost mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">Sign in to view your dashboard</h2>
+          <p className="text-sm text-muted-foreground mb-6">Track your generations and history.</p>
+          <Link to="/login" className="btn-primary-gradient px-6 py-3 rounded-lg text-sm font-semibold inline-block">
+            Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const totalGenerations = generations.length;
+  const todayCount = generations.filter(
+    (g) => new Date(g.created_at).toDateString() === new Date().toDateString()
   ).length;
 
-  const favoriteGen = history.length
+  const favoriteGen = generations.length
     ? Object.entries(
-        history.reduce<Record<string, number>>((acc, h) => {
-          acc[h.generator] = (acc[h.generator] || 0) + 1;
+        generations.reduce<Record<string, number>>((acc, g) => {
+          acc[g.generator_type] = (acc[g.generator_type] || 0) + 1;
           return acc;
         }, {})
       ).sort((a, b) => b[1] - a[1])[0]?.[0] || "None"
     : "None";
 
-  const handleCopy = (item: HistoryItem) => {
+  const handleCopy = (item: Generation) => {
     const text = Object.entries(item.result).map(([k, v]) => `${k}: ${v}`).join("\n");
     navigator.clipboard.writeText(text);
     toast.success("Copied!");
   };
 
-  const handleDelete = (index: number) => {
-    const updated = history.filter((_, i) => i !== index);
-    setHistory(updated);
-    localStorage.setItem("sf_history", JSON.stringify(updated));
-    toast.success("Deleted");
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("generations").delete().eq("id", id);
+    if (!error) {
+      setGenerations((prev) => prev.filter((g) => g.id !== id));
+      toast.success("Deleted");
+    }
   };
 
-  const handleExport = (item: HistoryItem) => {
+  const handleExport = (item: Generation) => {
     const text = Object.entries(item.result).map(([k, v]) => `${k}: ${v}`).join("\n");
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `storyforge-${item.generator}-${Date.now()}.txt`;
+    a.download = `storyforge-${item.generator_type}-${Date.now()}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -66,7 +105,7 @@ const Dashboard = () => {
       <div className="container max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-3xl font-bold mb-2 text-foreground">
-            Welcome back, <span className="gradient-text">Writer</span>.
+            Welcome back, <span className="gradient-text">{displayName || "Writer"}</span>.
           </h1>
           <p className="text-muted-foreground mb-8">Your creative dashboard</p>
 
@@ -88,15 +127,19 @@ const Dashboard = () => {
           {/* History */}
           <h2 className="text-lg font-semibold text-foreground mb-4">Generation History</h2>
 
-          {history.length === 0 ? (
+          {loading ? (
+            <div className="glass-card p-8 rounded-xl flex justify-center">
+              <div className="w-6 h-6 border-2 border-frost/20 border-t-frost rounded-full animate-spin" />
+            </div>
+          ) : generations.length === 0 ? (
             <div className="glass-card p-8 rounded-xl text-center">
               <p className="text-muted-foreground">No generations yet. Start creating!</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {history.map((item, i) => (
+              {generations.map((item, i) => (
                 <motion.div
-                  key={i}
+                  key={item.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
@@ -105,9 +148,9 @@ const Dashboard = () => {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-medium text-frost capitalize">{item.generator}</span>
+                        <span className="text-xs font-medium text-frost capitalize">{item.generator_type}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(item.date).toLocaleDateString()}
+                          {new Date(item.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       <p className="text-sm text-foreground/80 truncate">
@@ -121,7 +164,7 @@ const Dashboard = () => {
                       <button onClick={() => handleExport(item)} className="p-1.5 rounded hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors">
                         <Download className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDelete(i)} className="p-1.5 rounded hover:bg-muted/50 text-muted-foreground hover:text-destructive transition-colors">
+                      <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded hover:bg-muted/50 text-muted-foreground hover:text-destructive transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

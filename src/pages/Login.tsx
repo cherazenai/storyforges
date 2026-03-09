@@ -1,11 +1,55 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) navigate("/dashboard");
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Welcome back!");
+      navigate("/dashboard");
+    }
+  };
+
+  const handleGoogle = async () => {
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) toast.error("Google sign-in failed");
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Enter your email first");
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) toast.error(error.message);
+    else toast.success("Password reset email sent!");
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -22,7 +66,7 @@ const Login = () => {
           <p className="text-sm text-muted-foreground">Welcome back, Writer.</p>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="text-sm text-muted-foreground mb-1.5 block">Email</label>
             <div className="relative">
@@ -32,6 +76,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="writer@example.com"
+                required
                 className="w-full bg-muted/50 border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
               />
             </div>
@@ -45,24 +90,29 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                required
                 className="w-full bg-muted/50 border border-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
               />
             </div>
           </div>
 
           <div className="text-right">
-            <button className="text-xs text-frost hover:underline">Forgot password?</button>
+            <button type="button" onClick={handleForgotPassword} className="text-xs text-frost hover:underline">
+              Forgot password?
+            </button>
           </div>
 
           <button
             type="submit"
-            className="w-full btn-primary-gradient py-3 rounded-lg text-sm font-semibold"
+            disabled={loading}
+            className="w-full btn-primary-gradient py-3 rounded-lg text-sm font-semibold disabled:opacity-50"
           >
-            Login
+            {loading ? "Signing in..." : "Login"}
           </button>
 
           <button
             type="button"
+            onClick={handleGoogle}
             className="w-full btn-ghost-frost py-3 rounded-lg text-sm flex items-center justify-center gap-2"
           >
             Continue with Google
