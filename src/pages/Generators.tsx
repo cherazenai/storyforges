@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6 } from "lucide-react";
-import { generateCharacter, generateName, generateCultivation, generatePlotTwist, generateVillain, generateWorld } from "@/lib/generators";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
@@ -48,46 +48,42 @@ const Generators = () => {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setLoading(true);
     setResult(null);
 
-    setTimeout(() => {
-      let output;
-      switch (active) {
-        case "character":
-          output = generateCharacter(inputs.role, inputs.personality, inputs.setting);
-          break;
-        case "name":
-          output = generateName(inputs.style, inputs.type);
-          break;
-        case "cultivation":
-          output = generateCultivation(inputs.genre);
-          break;
-        case "plot":
-          output = generatePlotTwist(inputs.genre);
-          break;
-        case "villain":
-          output = generateVillain(inputs.archetype);
-          break;
-        case "world":
-          output = generateWorld(inputs.theme);
-          break;
-        default:
-          output = generateCharacter();
+    try {
+      const { data, error } = await supabase.functions.invoke("generate", {
+        body: { generatorType: active, inputs },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Generation failed");
       }
-      setResult(output.result as Record<string, string>);
-      setLoading(false);
+
+      if (data?.error) {
+        toast.error(data.error);
+        setLoading(false);
+        return;
+      }
+
+      const generatedResult = data.result as Record<string, string>;
+      setResult(generatedResult);
 
       // Save to history
       const history = JSON.parse(localStorage.getItem("sf_history") || "[]");
       history.unshift({
         generator: active,
         date: new Date().toISOString(),
-        result: output.result,
+        result: generatedResult,
       });
       localStorage.setItem("sf_history", JSON.stringify(history.slice(0, 50)));
-    }, 800);
+    } catch (err) {
+      console.error("Generation error:", err);
+      toast.error("Failed to generate. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = () => {
@@ -97,9 +93,9 @@ const Generators = () => {
     toast.success("Copied to clipboard!");
   };
 
-  const handleRandom = () => {
+  const handleRandom = async () => {
     setInputs({});
-    handleGenerate();
+    await handleGenerate();
   };
 
   const currentGen = generators.find((g) => g.id === active)!;
