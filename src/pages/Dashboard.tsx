@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wand2, Clock, Star, Copy, Trash2, Download, LogIn } from "lucide-react";
+import { Wand2, Clock, Star, Copy, Trash2, Download, LogIn, Sparkles, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsage } from "@/hooks/useUsage";
 import { Link } from "react-router-dom";
 
 interface Generation {
