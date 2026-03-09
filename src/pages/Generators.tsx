@@ -98,8 +98,9 @@ const Generators = () => {
     setIsFavorite(false);
 
     try {
+      const datasetSelections = getDatasetSelections(active);
       const { data, error } = await supabase.functions.invoke("generate", {
-        body: { generatorType: active, inputs },
+        body: { generatorType: active, inputs, datasetSelections },
       });
 
       if (error) throw new Error(error.message || "Generation failed");
