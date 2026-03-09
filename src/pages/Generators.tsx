@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star, Sparkles, FileText, FileSpreadsheet, FileDown, AlertCircle } from "lucide-react";
+import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star, Sparkles, FileText, FileSpreadsheet, FileDown, AlertCircle, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import { getDatasetSelections } from "@/lib/datasets";
 import { exportCharacterPDF, exportCharacterExcel, exportCharacterWord } from "@/lib/characterExport";
 import UsageMeter from "@/components/UsageMeter";
 import LimitReachedModal from "@/components/LimitReachedModal";
+import CharacterSheetModal from "@/components/CharacterSheetModal";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
@@ -88,6 +89,7 @@ const Generators = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [showNoCharModal, setShowNoCharModal] = useState(false);
+  const [showCharSheet, setShowCharSheet] = useState(false);
 
   const handleGenerate = async () => {
     if (isAtLimit) {
@@ -389,43 +391,60 @@ const Generators = () => {
 
                 {/* Export Buttons — only for character generator */}
                 {active === "character" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="flex flex-wrap gap-3 mt-4"
-                  >
-                    <button
-                      onClick={() => {
-                        try { exportCharacterPDF(result); toast.success("PDF exported!"); }
-                        catch { toast.error("PDF export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="flex flex-wrap gap-3 mt-4"
                     >
-                      <FileText className="w-4 h-4" />
-                      Export PDF
-                    </button>
-                    <button
-                      onClick={() => {
-                        try { exportCharacterExcel(result); toast.success("Excel exported!"); }
-                        catch { toast.error("Excel export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      <button
+                        onClick={() => {
+                          try { exportCharacterPDF(result); toast.success("PDF exported!"); }
+                          catch { toast.error("PDF export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Export PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          try { exportCharacterExcel(result); toast.success("Excel exported!"); }
+                          catch { toast.error("Excel export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Export Excel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try { await exportCharacterWord(result); toast.success("Word document exported!"); }
+                          catch { toast.error("Word export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Export Word
+                      </button>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="mt-3"
                     >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      Export Excel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try { await exportCharacterWord(result); toast.success("Word document exported!"); }
-                        catch { toast.error("Word export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
-                    >
-                      <FileDown className="w-4 h-4" />
-                      Export Word
-                    </button>
-                  </motion.div>
+                      <button
+                        onClick={() => setShowCharSheet(true)}
+                        className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold btn-primary-gradient hover:shadow-[0_0_24px_hsl(var(--frost)/0.2)] transition-all duration-200"
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                        Create Character Sheet
+                      </button>
+                    </motion.div>
+                  </>
                 )}
               </>
             )}
@@ -434,6 +453,14 @@ const Generators = () => {
       </div>
 
       <LimitReachedModal open={showLimitModal} onClose={() => setShowLimitModal(false)} />
+      {result && active === "character" && (
+        <CharacterSheetModal
+          open={showCharSheet}
+          onClose={() => setShowCharSheet(false)}
+          data={result}
+          plan={plan}
+        />
+      )}
 
       {/* No Character Generated Modal */}
       <AnimatePresence>
