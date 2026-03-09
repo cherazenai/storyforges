@@ -10,10 +10,10 @@ const searchItems = [
   { label: "Plot Twist Generator", path: "/generators", type: "generator" },
   { label: "Cultivation Generator", path: "/generators", type: "generator" },
   { label: "Name Generator", path: "/generators", type: "generator" },
+  { label: "Magic System Generator", path: "/generators", type: "generator" },
   { label: "Dark Elf Assassin Character", path: "/generators", type: "character" },
   { label: "Dragon Knight Character", path: "/generators", type: "character" },
   { label: "Character Sheet Designer", path: "/generators", type: "tool" },
-  { label: "Export PDF", path: "/generators", type: "tool" },
 ];
 
 const HeroSection = () => {
@@ -35,11 +35,15 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4">
-      {/* Glow aura */}
+    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden px-4 pt-16">
+      {/* Background glows */}
       <div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-15"
-        style={{ background: "radial-gradient(circle, hsl(196 51% 33% / 0.5), transparent 70%)" }}
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.08]"
+        style={{ background: "radial-gradient(circle, hsl(196 51% 33%), transparent 70%)" }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full opacity-[0.05]"
+        style={{ background: "radial-gradient(circle, hsl(208 30% 74%), transparent 70%)" }}
       />
 
       <div className="container max-w-3xl mx-auto text-center relative z-10">
@@ -48,13 +52,23 @@ const HeroSection = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5 tracking-tight">
-            Forge unforgettable characters and worlds with{" "}
+          <motion.span
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-frost text-xs font-medium tracking-wide mb-6"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            AI-Powered Writing Toolkit
+          </motion.span>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6 tracking-tight text-foreground">
+            Forge Characters, Worlds, and Stories with{" "}
             <span className="gradient-text">AI</span>.
           </h1>
 
           <p className="text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed">
-            StoryForge helps fantasy writers create characters, magic systems, worlds, and story arcs instantly.
+            StoryForge helps fantasy writers instantly generate characters, magic systems, worlds, and plot ideas.
           </p>
 
           {/* Search */}
@@ -68,7 +82,7 @@ const HeroSection = () => {
                 onFocus={() => setFocused(true)}
                 placeholder="Search characters, generators, or story ideas..."
                 className="input-glass w-full pl-12 pr-4 py-3.5 rounded-xl text-base"
-                style={{ boxShadow: "0 0 20px hsl(196 51% 33% / 0.08)" }}
+                style={{ boxShadow: "0 0 24px hsl(196 51% 33% / 0.06)" }}
               />
             </div>
 
@@ -83,17 +97,11 @@ const HeroSection = () => {
                   {filtered.map((item) => (
                     <button
                       key={item.label}
-                      onClick={() => {
-                        navigate(item.path);
-                        setQuery("");
-                        setFocused(false);
-                      }}
+                      onClick={() => { navigate(item.path); setQuery(""); setFocused(false); }}
                       className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-muted/50 transition-colors flex items-center justify-between"
                     >
                       <span>{item.label}</span>
-                      <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-muted/50">
-                        {item.type}
-                      </span>
+                      <span className="text-xs text-muted-foreground capitalize px-2 py-0.5 rounded-full bg-muted/50">{item.type}</span>
                     </button>
                   ))}
                 </motion.div>
@@ -103,17 +111,11 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/generators"
-              className="btn-primary-gradient px-8 py-3.5 rounded-lg text-center font-semibold inline-flex items-center justify-center gap-2"
-            >
+            <Link to="/generators" className="btn-primary-gradient px-8 py-3.5 rounded-lg text-center font-semibold inline-flex items-center justify-center gap-2">
               <Wand2 className="w-4 h-4" />
               Start Creating
             </Link>
-            <Link
-              to="/generators"
-              className="btn-ghost-frost px-8 py-3.5 rounded-lg text-center inline-flex items-center justify-center gap-2"
-            >
+            <Link to="/generators" className="btn-ghost-frost px-8 py-3.5 rounded-lg text-center inline-flex items-center justify-center gap-2">
               <BookOpen className="w-4 h-4" />
               Explore Generators
             </Link>
