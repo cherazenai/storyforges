@@ -1,36 +1,37 @@
 import { motion } from "framer-motion";
-import { Users, Scroll, Mountain, Zap, Skull, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Users, Skull, Globe, Zap, Mountain, Scroll } from "lucide-react";
 
 const features = [
   {
     icon: Users,
     title: "Character Generator",
-    description: "Create deep characters with personality, goals, secrets and flaws.",
-  },
-  {
-    icon: Scroll,
-    title: "Fantasy Name Generator",
-    description: "Generate unique fantasy names for heroes, villains, kingdoms and races.",
-  },
-  {
-    icon: Mountain,
-    title: "Cultivation Realm Generator",
-    description: "Generate realm names, power systems, and progression stages for xianxia novels.",
-  },
-  {
-    icon: Zap,
-    title: "Plot Twist Generator",
-    description: "Create shocking plot twists that keep your readers on the edge.",
+    description: "Create deep characters with personality, backstory, goals, secrets, and flaws for any genre.",
   },
   {
     icon: Skull,
-    title: "Villain Backstory Generator",
-    description: "Generate tragic or complex villain origins with depth.",
+    title: "Villain Generator",
+    description: "Generate tragic or complex villain origins with motivations that drive your story forward.",
   },
   {
     icon: Globe,
-    title: "Worldbuilding Generator",
-    description: "Generate kingdoms, magic systems, and detailed lore.",
+    title: "World Generator",
+    description: "Build kingdoms, magic systems, political structures, and detailed lore from scratch.",
+  },
+  {
+    icon: Zap,
+    title: "Magic System Generator",
+    description: "Design unique power systems with rules, limitations, and progression tiers.",
+  },
+  {
+    icon: Mountain,
+    title: "Cultivation Generator",
+    description: "Generate realm names, cultivation stages, and xianxia-style progression systems.",
+  },
+  {
+    icon: Scroll,
+    title: "Plot Generator",
+    description: "Create shocking plot twists, story arcs, and narrative hooks that keep readers hooked.",
   },
 ];
 
@@ -48,7 +49,7 @@ const FeaturesSection = () => {
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Powerful <span className="gradient-text">Generators</span> for Writers
           </h2>
-          <p className="text-silver/60 max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Everything you need to craft immersive stories, characters, and worlds.
           </p>
         </motion.div>
@@ -60,14 +61,15 @@ const FeaturesSection = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="glass-card p-6 group cursor-pointer"
+              transition={{ duration: 0.5, delay: i * 0.08 }}
             >
-              <div className="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <feature.icon className="w-6 h-6 text-frost" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-foreground">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              <Link to="/generators" className="glass-card p-6 group cursor-pointer block h-full">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:border-primary/30 transition-all duration-300">
+                  <feature.icon className="w-6 h-6 text-frost" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-foreground group-hover:text-frost transition-colors">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              </Link>
             </motion.div>
           ))}
         </div>
