@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star, Sparkles, FileText, FileSpreadsheet, FileDown, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
 import { getDatasetSelections } from "@/lib/datasets";
+import { exportCharacterPDF, exportCharacterExcel, exportCharacterWord } from "@/lib/characterExport";
 import UsageMeter from "@/components/UsageMeter";
 import LimitReachedModal from "@/components/LimitReachedModal";
 
