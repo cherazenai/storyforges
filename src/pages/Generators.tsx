@@ -145,6 +145,41 @@ const Generators = () => {
     await handleGenerate();
   };
 
+  const handleRandomIdea = async () => {
+    // Pick a random generator type and generate with empty inputs (datasets will provide variety)
+    const randomTypes = ["character", "world", "villain", "cultivation", "plot"];
+    const randomType = randomTypes[Math.floor(Math.random() * randomTypes.length)];
+    setActive(randomType);
+    setInputs({});
+    setResult(null);
+    setResultId(null);
+    setIsFavorite(false);
+    if (isAtLimit) { setShowLimitModal(true); return; }
+    setLoading(true);
+    try {
+      const datasetSelections = getDatasetSelections(randomType);
+      const { data, error } = await supabase.functions.invoke("generate", {
+        body: { generatorType: randomType, inputs: {}, datasetSelections },
+      });
+      if (error) throw new Error(error.message || "Generation failed");
+      if (data?.error) { toast.error(data.error); setLoading(false); return; }
+      const generatedResult = data.result as Record<string, string>;
+      setResult(generatedResult);
+      if (user) {
+        const { data: insertedData } = await supabase.from("generations").insert({
+          user_id: user.id, generator_type: randomType, inputs: {}, result: generatedResult,
+        }).select("id").single();
+        if (insertedData) setResultId(insertedData.id);
+        refreshUsage();
+      }
+    } catch (err) {
+      console.error("Random idea error:", err);
+      toast.error("Failed to generate. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFavorite = async () => {
     if (!user) {
       toast.error("Sign in to save favorites");
