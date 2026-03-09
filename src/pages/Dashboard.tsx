@@ -186,7 +186,7 @@ const Dashboard = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
-                    className={`glass-card p-4 rounded-xl ${item.is_favorite ? "border-yellow-500/20" : ""}`}
+                    className={`glass-card p-4 rounded-xl ${item.is_favorite ? "border-accent/30" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
