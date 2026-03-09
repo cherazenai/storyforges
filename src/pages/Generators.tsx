@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star } from "lucide-react";
+import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUsage } from "@/hooks/useUsage";
+import { getDatasetSelections } from "@/lib/datasets";
 import UsageMeter from "@/components/UsageMeter";
 import LimitReachedModal from "@/components/LimitReachedModal";
 
@@ -97,8 +98,9 @@ const Generators = () => {
     setIsFavorite(false);
 
     try {
+      const datasetSelections = getDatasetSelections(active);
       const { data, error } = await supabase.functions.invoke("generate", {
-        body: { generatorType: active, inputs },
+        body: { generatorType: active, inputs, datasetSelections },
       });
 
       if (error) throw new Error(error.message || "Generation failed");
@@ -141,6 +143,41 @@ const Generators = () => {
   const handleRandom = async () => {
     setInputs({});
     await handleGenerate();
+  };
+
+  const handleRandomIdea = async () => {
+    // Pick a random generator type and generate with empty inputs (datasets will provide variety)
+    const randomTypes = ["character", "world", "villain", "cultivation", "plot"];
+    const randomType = randomTypes[Math.floor(Math.random() * randomTypes.length)];
+    setActive(randomType);
+    setInputs({});
+    setResult(null);
+    setResultId(null);
+    setIsFavorite(false);
+    if (isAtLimit) { setShowLimitModal(true); return; }
+    setLoading(true);
+    try {
+      const datasetSelections = getDatasetSelections(randomType);
+      const { data, error } = await supabase.functions.invoke("generate", {
+        body: { generatorType: randomType, inputs: {}, datasetSelections },
+      });
+      if (error) throw new Error(error.message || "Generation failed");
+      if (data?.error) { toast.error(data.error); setLoading(false); return; }
+      const generatedResult = data.result as Record<string, string>;
+      setResult(generatedResult);
+      if (user) {
+        const { data: insertedData } = await supabase.from("generations").insert({
+          user_id: user.id, generator_type: randomType, inputs: {}, result: generatedResult,
+        }).select("id").single();
+        if (insertedData) setResultId(insertedData.id);
+        refreshUsage();
+      }
+    } catch (err) {
+      console.error("Random idea error:", err);
+      toast.error("Failed to generate. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFavorite = async () => {
@@ -209,6 +246,17 @@ const Generators = () => {
               </button>
             ))}
           </nav>
+          <div className="mt-6 px-3">
+            <button
+              onClick={handleRandomIdea}
+              disabled={loading}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold btn-primary-gradient disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4" />
+              Random Idea
+            </button>
+            <p className="text-xs text-muted-foreground mt-2 px-1">Generate a random character, world, villain, power system, and plot twist using our datasets.</p>
+          </div>
         </aside>
 
         {/* Overlay */}

@@ -37,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const { generatorType, inputs } = await req.json();
+    const { generatorType, inputs, datasetSelections } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -45,14 +45,53 @@ serve(async (req) => {
     const systemPrompt = systemPrompts[generatorType];
     if (!systemPrompt) throw new Error(`Unknown generator type: ${generatorType}`);
 
-    // Build user prompt from inputs
+    // Build user prompt from inputs AND dataset selections
     const inputParts = Object.entries(inputs || {})
       .filter(([, v]) => v)
       .map(([k, v]) => `${k}: ${v}`);
     
-    const userPrompt = inputParts.length > 0
-      ? `Generate with these preferences:\n${inputParts.join("\n")}`
-      : "Generate something completely random and creative.";
+    // Build dataset context
+    const datasetParts: string[] = [];
+    const ds = datasetSelections || {};
+    
+    if (generatorType === "character") {
+      if (ds.dataName) datasetParts.push(`Suggested Name: ${ds.dataName}`);
+      if (ds.dataTrait) datasetParts.push(`Core Personality Trait: ${ds.dataTrait}`);
+      if (ds.dataPower) datasetParts.push(`Primary Ability: ${ds.dataPower}`);
+      if (ds.dataRealm) datasetParts.push(`Cultivation Realm: ${ds.dataRealm}`);
+      if (ds.dataConflict) datasetParts.push(`World Conflict: ${ds.dataConflict}`);
+    } else if (generatorType === "world") {
+      if (ds.dataKingdom) datasetParts.push(`Kingdom Name: ${ds.dataKingdom}`);
+      if (ds.dataMonster) datasetParts.push(`Dominant Monster: ${ds.dataMonster}`);
+      if (ds.dataMagic) datasetParts.push(`Magic System Base: ${ds.dataMagic}`);
+      if (ds.dataConflict) datasetParts.push(`World Conflict: ${ds.dataConflict}`);
+    } else if (generatorType === "cultivation") {
+      if (ds.dataRealms) datasetParts.push(`Use these cultivation stages as a foundation: ${ds.dataRealms}`);
+    } else if (generatorType === "villain") {
+      if (ds.dataName) datasetParts.push(`Villain Name: ${ds.dataName}`);
+      if (ds.dataTrait) datasetParts.push(`Core Trait: ${ds.dataTrait}`);
+      if (ds.dataPower) datasetParts.push(`Signature Power: ${ds.dataPower}`);
+      if (ds.dataSect) datasetParts.push(`Affiliated Sect: ${ds.dataSect}`);
+    } else if (generatorType === "name") {
+      if (ds.dataSamples) datasetParts.push(`Use these as style inspiration (do NOT copy them): ${ds.dataSamples}`);
+    } else if (generatorType === "plot") {
+      if (ds.dataConflict) datasetParts.push(`Base Conflict: ${ds.dataConflict}`);
+      if (ds.dataKingdom) datasetParts.push(`Setting: ${ds.dataKingdom}`);
+      if (ds.dataMonster) datasetParts.push(`Key Creature: ${ds.dataMonster}`);
+    }
+
+    let userPrompt = "";
+    if (datasetParts.length > 0) {
+      userPrompt += `Use the following dataset-selected elements to guide your creation:\n${datasetParts.join("\n")}\n\n`;
+    }
+    if (inputParts.length > 0) {
+      userPrompt += `Additional preferences from the user:\n${inputParts.join("\n")}\n\n`;
+    }
+    if (!userPrompt) {
+      userPrompt = "Generate something completely random and creative.";
+    } else {
+      userPrompt += "Weave these elements together into something creative and cohesive. Do not simply list them back — use them as inspiration for a rich, original creation.";
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
