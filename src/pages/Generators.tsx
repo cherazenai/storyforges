@@ -87,6 +87,10 @@ const Generators = () => {
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const handleGenerate = async () => {
+    if (isAtLimit) {
+      setShowLimitModal(true);
+      return;
+    }
     setLoading(true);
     setResult(null);
     setResultId(null);
@@ -117,6 +121,7 @@ const Generators = () => {
           result: generatedResult,
         }).select("id").single();
         if (insertedData) setResultId(insertedData.id);
+        refreshUsage();
       }
     } catch (err) {
       console.error("Generation error:", err);
