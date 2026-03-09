@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6 } from "lucide-react";
+import { Users, Scroll, Mountain, Zap, Skull, Globe, Copy, RefreshCw, Dice6, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,54 +14,85 @@ const generators = [
   { id: "world", label: "World Generator", icon: Globe },
 ];
 
+// Dropdown options for character generator
+const characterOptions = {
+  role: ["Protagonist", "Anti-Hero", "Villain", "Side Character", "Mentor", "Rival"],
+  genre: ["Fantasy", "Sci-Fi", "Xianxia", "Wuxia", "LitRPG", "Dark Fantasy", "Modern Fantasy", "Post-Apocalyptic"],
+  race: ["Human", "Elf", "Demon", "Angel", "Dragonborn", "Spirit", "Vampire", "Beastkin", "Android", "Custom"],
+  powerType: ["Magic", "Cultivation", "Technology", "Divine Power", "Swordsmanship", "Bloodline Ability"],
+  powerLevel: ["Beginner", "Rising Talent", "Elite Warrior", "Legendary Hero", "God-Tier Being"],
+};
+
+interface FieldConfig {
+  key: string;
+  label: string;
+  type: "text" | "select";
+  placeholder?: string;
+  options?: string[];
+}
+
 interface GeneratorInputs {
-  [key: string]: { label: string; placeholder: string; key: string }[];
+  [key: string]: FieldConfig[];
 }
 
 const inputFields: GeneratorInputs = {
   character: [
-    { key: "role", label: "Character Role", placeholder: "e.g. Fallen Prince, Shadow Assassin" },
-    { key: "personality", label: "Personality Keywords", placeholder: "e.g. ruthless, intelligent" },
-    { key: "setting", label: "World Setting", placeholder: "e.g. Dark Fantasy, Sci-fi" },
+    { key: "role", label: "Character Role", type: "select", options: characterOptions.role },
+    { key: "genre", label: "Genre / Setting", type: "select", options: characterOptions.genre },
+    { key: "race", label: "Race / Species", type: "select", options: characterOptions.race },
+    { key: "personality", label: "Personality Traits", type: "text", placeholder: "e.g. ruthless, intelligent, kind, arrogant, chaotic" },
+    { key: "powerType", label: "Power Type", type: "select", options: characterOptions.powerType },
+    { key: "powerLevel", label: "Power Level", type: "select", options: characterOptions.powerLevel },
+    { key: "goal", label: "Goal / Ambition", type: "text", placeholder: "e.g. Avenge his fallen kingdom, ascend to immortality" },
+    { key: "worldSetting", label: "World Setting", type: "text", placeholder: "e.g. A dying empire ruled by dragon lords" },
   ],
   name: [
-    { key: "style", label: "Name Style", placeholder: "e.g. Elven, Draconic, Nordic" },
-    { key: "type", label: "Name Type", placeholder: "e.g. Character, Kingdom, Race" },
+    { key: "style", label: "Name Style", type: "text", placeholder: "e.g. Elven, Draconic, Nordic" },
+    { key: "type", label: "Name Type", type: "text", placeholder: "e.g. Character, Kingdom, Race" },
   ],
   cultivation: [
-    { key: "genre", label: "Genre", placeholder: "e.g. Xianxia, Wuxia, Cultivation" },
+    { key: "genre", label: "Genre", type: "text", placeholder: "e.g. Xianxia, Wuxia, Cultivation" },
   ],
   plot: [
-    { key: "genre", label: "Story Genre", placeholder: "e.g. Fantasy, Sci-fi, Romance" },
+    { key: "genre", label: "Story Genre", type: "text", placeholder: "e.g. Fantasy, Sci-fi, Romance" },
   ],
   villain: [
-    { key: "archetype", label: "Villain Archetype", placeholder: "e.g. Fallen Hero, Mad Scholar" },
+    { key: "archetype", label: "Villain Archetype", type: "text", placeholder: "e.g. Fallen Hero, Mad Scholar" },
   ],
   world: [
-    { key: "theme", label: "World Theme", placeholder: "e.g. Dark Fantasy, Steampunk" },
+    { key: "theme", label: "World Theme", type: "text", placeholder: "e.g. Dark Fantasy, Steampunk" },
   ],
 };
+
+// Character result has special formatting
+const characterResultOrder = [
+  "Name", "Title / Alias", "Race", "Role", "World Setting",
+  "Personality", "Backstory", "Abilities / Powers", "Goal / Motivation",
+  "Secret", "Weakness", "Character Arc Potential"
+];
 
 const Generators = () => {
   const { user } = useAuth();
   const [active, setActive] = useState("character");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<Record<string, string> | null>(null);
+  const [resultId, setResultId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
     setResult(null);
+    setResultId(null);
+    setIsFavorite(false);
 
     try {
       const { data, error } = await supabase.functions.invoke("generate", {
         body: { generatorType: active, inputs },
       });
 
-      if (error) {
-        throw new Error(error.message || "Generation failed");
-      }
+      if (error) throw new Error(error.message || "Generation failed");
 
       if (data?.error) {
         toast.error(data.error);
@@ -74,12 +105,13 @@ const Generators = () => {
 
       // Save to database if logged in
       if (user) {
-        await supabase.from("generations").insert({
+        const { data: insertedData } = await supabase.from("generations").insert({
           user_id: user.id,
           generator_type: active,
           inputs,
           result: generatedResult,
-        });
+        }).select("id").single();
+        if (insertedData) setResultId(insertedData.id);
       }
     } catch (err) {
       console.error("Generation error:", err);
@@ -91,7 +123,7 @@ const Generators = () => {
 
   const handleCopy = () => {
     if (!result) return;
-    const text = Object.entries(result).map(([k, v]) => `${k}: ${v}`).join("\n");
+    const text = Object.entries(result).map(([k, v]) => `${k}:\n${v}`).join("\n\n");
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard!");
   };
@@ -101,7 +133,41 @@ const Generators = () => {
     await handleGenerate();
   };
 
+  const handleFavorite = async () => {
+    if (!user) {
+      toast.error("Sign in to save favorites");
+      return;
+    }
+    if (!resultId) return;
+
+    const newFavorite = !isFavorite;
+    const { error } = await supabase
+      .from("generations")
+      .update({ is_favorite: newFavorite })
+      .eq("id", resultId);
+
+    if (!error) {
+      setIsFavorite(newFavorite);
+      toast.success(newFavorite ? "Added to favorites!" : "Removed from favorites");
+    }
+  };
+
   const currentGen = generators.find((g) => g.id === active)!;
+  const fields = inputFields[active] || [];
+
+  // Order result keys for character generator
+  const orderedResultEntries = () => {
+    if (!result) return [];
+    if (active === "character") {
+      return characterResultOrder
+        .filter(key => key in result)
+        .map(key => [key, result[key]] as [string, string])
+        .concat(
+          Object.entries(result).filter(([key]) => !characterResultOrder.includes(key))
+        );
+    }
+    return Object.entries(result);
+  };
 
   return (
     <div className="min-h-screen bg-background pt-16">
@@ -147,22 +213,40 @@ const Generators = () => {
               <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
                 <currentGen.icon className="w-5 h-5 text-frost" />
               </div>
-              <h1 className="text-2xl font-bold text-foreground">{currentGen.label}</h1>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">{currentGen.label}</h1>
+                {active === "character" && (
+                  <p className="text-sm text-muted-foreground">Create deep characters for your web novel</p>
+                )}
+              </div>
             </div>
 
             {/* Inputs */}
             <div className="glass-card p-6 rounded-xl mb-6">
-              <div className="space-y-4">
-                {inputFields[active]?.map((field) => (
-                  <div key={field.key}>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {fields.map((field) => (
+                  <div key={field.key} className={field.type === "text" && active === "character" ? "sm:col-span-2" : ""}>
                     <label className="text-sm text-muted-foreground mb-1.5 block">{field.label}</label>
-                    <input
-                      type="text"
-                      value={inputs[field.key] || ""}
-                      onChange={(e) => setInputs({ ...inputs, [field.key]: e.target.value })}
-                      placeholder={field.placeholder}
-                      className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
-                    />
+                    {field.type === "select" ? (
+                      <select
+                        value={inputs[field.key] || ""}
+                        onChange={(e) => setInputs({ ...inputs, [field.key]: e.target.value })}
+                        className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors appearance-none cursor-pointer"
+                      >
+                        <option value="">Select...</option>
+                        {field.options?.map((opt) => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={inputs[field.key] || ""}
+                        onChange={(e) => setInputs({ ...inputs, [field.key]: e.target.value })}
+                        placeholder={field.placeholder}
+                        className="w-full bg-muted/50 border border-border rounded-lg px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -182,7 +266,8 @@ const Generators = () => {
                 </button>
                 <button
                   onClick={handleRandom}
-                  className="btn-ghost-frost px-4 py-2.5 rounded-lg text-sm flex items-center gap-2"
+                  disabled={loading}
+                  className="btn-ghost-frost px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50"
                 >
                   <Dice6 className="w-4 h-4" />
                   Random
@@ -195,7 +280,7 @@ const Generators = () => {
               <div className="glass-card p-8 rounded-xl flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-8 h-8 border-2 border-frost/20 border-t-frost rounded-full animate-spin" />
-                  <p className="text-sm text-muted-foreground">Generating...</p>
+                  <p className="text-sm text-muted-foreground">Generating epic character...</p>
                 </div>
               </div>
             )}
@@ -207,23 +292,32 @@ const Generators = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="glass-card p-6 rounded-xl frost-glow"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-frost">Generated Result</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-semibold text-frost uppercase tracking-wider">Generated Character</h3>
                   <div className="flex gap-2">
-                    <button onClick={handleCopy} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
+                    <button
+                      onClick={handleFavorite}
+                      className={`p-2 rounded-lg transition-colors ${isFavorite ? "bg-yellow-500/20 text-yellow-400" : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"}`}
+                      title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      <Star className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
+                    </button>
+                    <button onClick={handleCopy} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Copy">
                       <Copy className="w-4 h-4" />
                     </button>
-                    <button onClick={handleGenerate} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
+                    <button onClick={handleGenerate} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Regenerate">
                       <RefreshCw className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {Object.entries(result).map(([key, value]) => (
-                    <div key={key} className="flex flex-col sm:flex-row sm:gap-4">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider min-w-[140px] pt-0.5">{key}</span>
-                      <span className="text-sm text-foreground whitespace-pre-wrap">{value}</span>
+                <div className="space-y-5">
+                  {orderedResultEntries().map(([key, value]) => (
+                    <div key={key} className="group">
+                      <span className="text-xs font-semibold text-frost uppercase tracking-wider block mb-1">{key}</span>
+                      <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed pl-3 border-l-2 border-primary/20">
+                        {value}
+                      </div>
                     </div>
                   ))}
                 </div>
