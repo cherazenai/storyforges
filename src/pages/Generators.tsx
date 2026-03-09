@@ -76,6 +76,7 @@ const characterResultOrder = [
 
 const Generators = () => {
   const { user } = useAuth();
+  const { plan, used, limit, percentage, isAtLimit, refresh: refreshUsage } = useUsage();
   const [active, setActive] = useState("character");
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [result, setResult] = useState<Record<string, string> | null>(null);
@@ -83,6 +84,7 @@ const Generators = () => {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
