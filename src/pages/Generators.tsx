@@ -350,46 +350,121 @@ const Generators = () => {
 
             {/* Result */}
             {result && !loading && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-6 rounded-xl frost-glow"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-sm font-semibold text-frost uppercase tracking-wider">Generated Character</h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleFavorite}
-                      className={`p-2 rounded-lg transition-colors ${isFavorite ? "bg-yellow-500/20 text-yellow-400" : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"}`}
-                      title={isFavorite ? "Remove from favorites" : "Add to favorites"}
-                    >
-                      <Star className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
-                    </button>
-                    <button onClick={handleCopy} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Copy">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button onClick={handleGenerate} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Regenerate">
-                      <RefreshCw className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-                  {orderedResultEntries().map(([key, value]) => (
-                    <div key={key} className="group">
-                      <span className="text-xs font-semibold text-frost uppercase tracking-wider block mb-1">{key}</span>
-                      <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed pl-3 border-l-2 border-primary/20">
-                        {value}
-                      </div>
+              <>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card p-6 rounded-xl frost-glow"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-sm font-semibold text-frost uppercase tracking-wider">Generated Character</h3>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleFavorite}
+                        className={`p-2 rounded-lg transition-colors ${isFavorite ? "bg-yellow-500/20 text-yellow-400" : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"}`}
+                        title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <Star className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
+                      </button>
+                      <button onClick={handleCopy} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Copy">
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <button onClick={handleGenerate} className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground" title="Regenerate">
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </motion.div>
+                  </div>
+
+                  <div className="space-y-5">
+                    {orderedResultEntries().map(([key, value]) => (
+                      <div key={key} className="group">
+                        <span className="text-xs font-semibold text-frost uppercase tracking-wider block mb-1">{key}</span>
+                        <div className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed pl-3 border-l-2 border-primary/20">
+                          {value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Export Buttons — only for character generator */}
+                {active === "character" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="flex flex-wrap gap-3 mt-4"
+                  >
+                    <button
+                      onClick={() => {
+                        try { exportCharacterPDF(result); toast.success("PDF exported!"); }
+                        catch { toast.error("PDF export failed"); }
+                      }}
+                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Export PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        try { exportCharacterExcel(result); toast.success("Excel exported!"); }
+                        catch { toast.error("Excel export failed"); }
+                      }}
+                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      Export Excel
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try { await exportCharacterWord(result); toast.success("Word document exported!"); }
+                        catch { toast.error("Word export failed"); }
+                      }}
+                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                    >
+                      <FileDown className="w-4 h-4" />
+                      Export Word
+                    </button>
+                  </motion.div>
+                )}
+              </>
             )}
           </motion.div>
         </main>
       </div>
+
       <LimitReachedModal open={showLimitModal} onClose={() => setShowLimitModal(false)} />
+
+      {/* No Character Generated Modal */}
+      <AnimatePresence>
+        {showNoCharModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm"
+            onClick={() => setShowNoCharModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card p-6 rounded-xl max-w-sm w-full mx-4 text-center border border-border"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertCircle className="w-10 h-10 text-frost mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-foreground mb-2">No Character Generated</h3>
+              <p className="text-sm text-muted-foreground mb-5">Generate a character first before exporting.</p>
+              <button
+                onClick={() => setShowNoCharModal(false)}
+                className="btn-primary-gradient px-6 py-2.5 rounded-lg text-sm font-semibold"
+              >
+                OK
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
