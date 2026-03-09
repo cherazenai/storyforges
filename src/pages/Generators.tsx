@@ -9,6 +9,7 @@ import { getDatasetSelections } from "@/lib/datasets";
 import { exportCharacterPDF, exportCharacterExcel, exportCharacterWord } from "@/lib/characterExport";
 import UsageMeter from "@/components/UsageMeter";
 import LimitReachedModal from "@/components/LimitReachedModal";
+import CharacterSheetModal from "@/components/CharacterSheetModal";
 
 const generators = [
   { id: "character", label: "Character Generator", icon: Users },
