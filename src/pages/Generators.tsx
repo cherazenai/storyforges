@@ -211,6 +211,17 @@ const Generators = () => {
               </button>
             ))}
           </nav>
+          <div className="mt-6 px-3">
+            <button
+              onClick={handleRandomIdea}
+              disabled={loading}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold btn-primary-gradient disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4" />
+              Random Idea
+            </button>
+            <p className="text-xs text-muted-foreground mt-2 px-1">Generate a random character, world, villain, power system, and plot twist using our datasets.</p>
+          </div>
         </aside>
 
         {/* Overlay */}
