@@ -391,59 +391,60 @@ const Generators = () => {
 
                 {/* Export Buttons — only for character generator */}
                 {active === "character" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="flex flex-wrap gap-3 mt-4"
-                  >
-                    <button
-                      onClick={() => {
-                        try { exportCharacterPDF(result); toast.success("PDF exported!"); }
-                        catch { toast.error("PDF export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="flex flex-wrap gap-3 mt-4"
                     >
-                      <FileText className="w-4 h-4" />
-                      Export PDF
-                    </button>
-                    <button
-                      onClick={() => {
-                        try { exportCharacterExcel(result); toast.success("Excel exported!"); }
-                        catch { toast.error("Excel export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
-                    >
-                      <FileSpreadsheet className="w-4 h-4" />
-                      Export Excel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        try { await exportCharacterWord(result); toast.success("Word document exported!"); }
-                        catch { toast.error("Word export failed"); }
-                      }}
-                      className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
-                    >
-                      <FileDown className="w-4 h-4" />
-                      Export Word
-                    </button>
-                  </motion.div>
+                      <button
+                        onClick={() => {
+                          try { exportCharacterPDF(result); toast.success("PDF exported!"); }
+                          catch { toast.error("PDF export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Export PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          try { exportCharacterExcel(result); toast.success("Excel exported!"); }
+                          catch { toast.error("Excel export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        Export Excel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try { await exportCharacterWord(result); toast.success("Word document exported!"); }
+                          catch { toast.error("Word export failed"); }
+                        }}
+                        className="group relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 border border-primary/20 text-frost hover:bg-primary/20 hover:border-primary/40 hover:shadow-[0_0_16px_hsl(var(--frost)/0.15)] transition-all duration-200"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        Export Word
+                      </button>
+                    </motion.div>
 
-                  {/* Character Sheet Button */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.25 }}
-                    className="mt-3"
-                  >
-                    <button
-                      onClick={() => setShowCharSheet(true)}
-                      className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold btn-primary-gradient hover:shadow-[0_0_24px_hsl(var(--frost)/0.2)] transition-all duration-200"
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="mt-3"
                     >
-                      <LayoutTemplate className="w-4 h-4" />
-                      Create Character Sheet
-                    </button>
-                  </motion.div>
+                      <button
+                        onClick={() => setShowCharSheet(true)}
+                        className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-lg text-sm font-semibold btn-primary-gradient hover:shadow-[0_0_24px_hsl(var(--frost)/0.2)] transition-all duration-200"
+                      >
+                        <LayoutTemplate className="w-4 h-4" />
+                        Create Character Sheet
+                      </button>
+                    </motion.div>
+                  </>
                 )}
               </>
             )}
