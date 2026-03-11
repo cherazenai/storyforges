@@ -1,13 +1,34 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Check, Sparkles, Zap, Crown, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Check, Sparkles, Zap, Crown, Building2, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useRazorpay } from "@/hooks/useRazorpay";
 
-const plans = [
+type PlanKey = "free" | "writer" | "pro_author" | "studio";
+
+const plans: Array<{
+  name: string;
+  key: PlanKey;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  monthlyPriceINR: number;
+  yearlyPriceINR: number;
+  limit: string;
+  badge: string | null;
+  icon: typeof Zap;
+  features: string[];
+  excluded: string[];
+  cta: string;
+  highlighted: boolean;
+}> = [
   {
     name: "Free",
+    key: "free",
     monthlyPrice: 0,
     yearlyPrice: 0,
+    monthlyPriceINR: 0,
+    yearlyPriceINR: 0,
     limit: "10 generations / day",
     badge: null,
     icon: Zap,
@@ -28,8 +49,11 @@ const plans = [
   },
   {
     name: "Writer",
+    key: "writer",
     monthlyPrice: 12,
     yearlyPrice: 120,
+    monthlyPriceINR: 999,
+    yearlyPriceINR: 9999,
     limit: "300 generations / month",
     badge: "Most Popular",
     icon: Sparkles,
@@ -49,8 +73,11 @@ const plans = [
   },
   {
     name: "Pro Author",
+    key: "pro_author",
     monthlyPrice: 25,
     yearlyPrice: 240,
+    monthlyPriceINR: 2099,
+    yearlyPriceINR: 19999,
     limit: "1,500 generations / month",
     badge: null,
     icon: Crown,
@@ -68,8 +95,11 @@ const plans = [
   },
   {
     name: "Studio",
+    key: "studio",
     monthlyPrice: 49,
     yearlyPrice: 470,
+    monthlyPriceINR: 4099,
+    yearlyPriceINR: 38999,
     limit: "5,000 generations / month",
     badge: "For Power Users",
     icon: Building2,
@@ -89,6 +119,32 @@ const plans = [
 
 const Pricing = () => {
   const [yearly, setYearly] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const { checkout, loading: paymentLoading } = useRazorpay({
+    onSuccess: () => {
+      navigate("/dashboard");
+    },
+  });
+
+  const [activePlan, setActivePlan] = useState<string | null>(null);
+
+  const handlePlanClick = (plan: typeof plans[0]) => {
+    if (plan.key === "free") {
+      navigate("/signup");
+      return;
+    }
+
+    if (!user) {
+      navigate("/signup");
+      return;
+    }
+
+    setActivePlan(plan.key);
+    const period = yearly ? "yearly" : "monthly";
+    checkout(plan.key, period);
+  };
 
   return (
     <div className="min-h-screen bg-[#000000] pt-24 pb-16 px-4">
@@ -133,9 +189,10 @@ const Pricing = () => {
         {/* Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {plans.map((plan, i) => {
-            const price = yearly ? plan.yearlyPrice : plan.monthlyPrice;
+            const priceINR = yearly ? plan.yearlyPriceINR : plan.monthlyPriceINR;
             const period = plan.monthlyPrice === 0 ? "" : yearly ? "/year" : "/mo";
             const Icon = plan.icon;
+            const isLoading = paymentLoading && activePlan === plan.key;
 
             return (
               <motion.div
@@ -181,25 +238,33 @@ const Pricing = () => {
                   {/* Price */}
                   <div className="flex items-baseline gap-1 mb-1">
                     <span className="text-4xl font-extrabold text-foreground">
-                      ${price}
+                      {priceINR === 0 ? "Free" : `₹${priceINR.toLocaleString("en-IN")}`}
                     </span>
-                    {period && <span className="text-sm text-muted-foreground">{period}</span>}
+                    {period && priceINR > 0 && <span className="text-sm text-muted-foreground">{period}</span>}
                   </div>
 
                   {/* Limit */}
                   <p className="text-xs text-muted-foreground mb-5">{plan.limit}</p>
 
                   {/* CTA */}
-                  <Link
-                    to="/signup"
-                    className={`block text-center py-2.5 rounded-lg text-sm font-semibold transition-all mb-6 ${
+                  <button
+                    onClick={() => handlePlanClick(plan)}
+                    disabled={isLoading || paymentLoading}
+                    className={`block w-full text-center py-2.5 rounded-lg text-sm font-semibold transition-all mb-6 disabled:opacity-50 ${
                       plan.highlighted
                         ? "btn-primary-gradient hover:shadow-[0_0_20px_-5px_hsl(var(--primary)/0.5)]"
                         : "border border-border text-foreground hover:bg-muted/50"
                     }`}
                   >
-                    {plan.cta}
-                  </Link>
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      plan.cta
+                    )}
+                  </button>
 
                   {/* Features */}
                   <ul className="space-y-2.5 flex-1">
