@@ -7,9 +7,9 @@ const corsHeaders = {
 };
 
 const PLAN_PRICES: Record<string, { monthly: number; yearly: number }> = {
-  writer: { monthly: 1200, yearly: 12000 }, // in smallest currency unit (paise for INR → ₹12, ₹120)
-  pro_author: { monthly: 2500, yearly: 24000 },
-  studio: { monthly: 4900, yearly: 47000 },
+  writer: { monthly: 99900, yearly: 999900 }, // in paise: ₹999, ₹9999
+  pro_author: { monthly: 209900, yearly: 1999900 }, // ₹2099, ₹19999
+  studio: { monthly: 409900, yearly: 3899900 }, // ₹4099, ₹38999
 };
 
 Deno.serve(async (req) => {
